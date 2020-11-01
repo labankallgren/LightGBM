@@ -15,6 +15,9 @@
 #include <stdexcept>
 #include <string>
 
+#include <QSet>
+#include <QRegExp>
+
 #ifdef LGB_R_BUILD
 #define R_NO_REMAP
 #define R_USE_C99_IN_CXX
@@ -89,6 +92,9 @@ class Log {
 
   static void ResetCallBack(Callback callback) { GetLogCallBack() = callback; }
 
+  static QSet<QRegExp>& GetSuppressFilter();
+  static bool PassSuppressFilter(const char* level_str, const char *format);
+
   static void Debug(const char *format, ...) {
     va_list val;
     va_start(val, format);
@@ -132,7 +138,7 @@ class Log {
  private:
   static void Write(LogLevel level, const char *level_str, const char *format,
                     va_list val) {
-    if (level <= GetLevel()) {  // omit the message with low level
+    if (level <= GetLevel() && PassSuppressFilter(level_str, format)) {  // omit the message with low level
 // R code should write back to R's output stream,
 // otherwise to stdout
 #ifndef LGB_R_BUILD
